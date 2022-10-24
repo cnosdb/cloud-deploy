@@ -1,0 +1,68 @@
+global:
+  imageRegistry: ""
+  imagePullSecrets: []
+  storageClass: ""
+  name: cnosdb
+
+kubeVersion: ""
+nameOverride: ""
+fullnameOverride: ""
+namespaceOverride: ""
+clusterDomain: cluster.local
+commonAnnotations: {}
+commonLabels: {}
+extraDeploy: []
+
+image:
+  registry: docker.io
+  repository: cnosdb/cnosdb
+  tag: latest
+  digest: ""
+  pullPolicy: IfNotPresent
+  ## pullSecrets:
+  ##   - myRegistryKeySecretName
+  pullSecrets: []
+  debug: false
+
+config:
+  cpu: 2
+  memory: 2
+  tskv:
+    max_summary_size: 134217728
+    max_level: 4 
+    base_file_size: 16777216
+    compact_trigger: 4
+    existingConfigmap: ""
+    max_compact_size: 2147483648
+    cache:
+      max_buffer_size: 134217728
+
+  resources:
+    limits:
+      cpu: 2000m 
+      memory: 2048Mi
+    requests: 
+      cpu: 2000m 
+      memory: 2048Mi
+
+  service:
+    type: ClusterIP
+    ports:
+      cnosdb: 31007
+    nodePorts:
+      cnosdb: 32086
+    clusterIP: ""
+    loadBalancerIP: ""
+    externalTrafficPolicy: Cluster
+    loadBalancerSourceRanges: []
+    extraPorts: []
+    annotations: {}
+    sessionAffinity: None
+    sessionAffinityConfig: {}
+    headless:
+      annotations: {}
+
+networkPolicy:
+  enabled: false
+  allowExternal: true
+  explicitNamespacesSelector: {}

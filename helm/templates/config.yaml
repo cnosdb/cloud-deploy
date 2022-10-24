@@ -1,0 +1,43 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Chart.Name }}
+  labels:
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+data:
+  cnosdb.conf: |-
+    [storage]
+    # Directory for summary: $path/summary/
+    # Directory for index: $path/index/$database/
+    # Directory for tsm: $path/data/$database/tsm/
+    # Directory for delta: $path/data/$database/delta/
+    path = 'data/db'
+    max_summary_size = {{ .Values.config.tskv.max_summary_size }}
+    max_level = {{ .Values.config.tskv.max_level }}
+    base_file_size = {{ .Values.config.tskv.base_file_size }}
+    compact_trigger = {{ .Values.config.tskv.compact_trigger }}
+    max_compact_size = {{ .Values.config.tskv.max_compact_size }} 
+    dio_max_resident = 1024
+    dio_max_non_resident = 1024
+    dio_page_len_scale = 1
+    strict_write = false
+
+    [wal]
+    enabled = true
+    path = 'data/wal'
+    sync = false
+
+    [cache]
+    max_buffer_size = {{ .Values.config.tskv.cache.max_buffer_size }} 
+    max_immutable_number = 4
+
+    [log]
+    level = 'debug'
+    path = 'data/log'
+
+    [security]
+    # [security.tls_config]
+    # certificate = "./config/tls/server.crt"
+    # private_key = "./config/tls/server.key"

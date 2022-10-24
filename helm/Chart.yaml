@@ -1,0 +1,21 @@
+annotations:
+  category: Database
+apiVersion: v2
+appVersion: 0.0.1
+description: Cnosdb is An Open Source Distributed Time Series Database with high performance, high compression ratio and high usability.
+engine: gotpl
+home: https://www.cnosdb.com/
+keywords:
+  - cnosdb
+  - Time Series
+  - database
+  - sql
+  - cluster
+  - high availability
+maintainers:
+  - name: cnosdb
+    url: https://github.com/cnosdb/cnosdb
+name: cnosdb
+sources:
+  - https://github.com/cnosdb/cnosdb
+version: 2.0-beta
