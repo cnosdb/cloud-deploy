@@ -25,8 +25,10 @@ image:
   debug: false
 
 config:
-  cpu: 2
-  memory: 2
+  cpu: 4
+  memory: 4
+  stroageClass: gp2
+  storageSize: 10Gi
   tskv:
     max_summary_size: 134217728
     max_level: 4 

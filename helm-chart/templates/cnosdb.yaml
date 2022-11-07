@@ -18,16 +18,17 @@ spec:
       labels:
         app: cnosdb
     spec:
+      automountServiceAccountToken: false
       containers:
       - name: cnosdb
         image: cnosdb/cnosdb:latest
         resources:
           requests:
             cpu: {{ .Values.config.resources.requests.cpu }}
-            memory: {{ .Values.config.resources.requests.cpu }}
+            memory: {{ .Values.config.resources.requests.memory }}
           limits:
             cpu: {{ .Values.config.resources.limits.cpu }}
-            memory: {{ .Values.config.resources.limits.cpu }}
+            memory: {{ .Values.config.resources.limits.memory }}
         env:
         - name: cpu
           value: "{{ .Values.config.cpu }}"
@@ -38,14 +39,20 @@ spec:
           containerPort: {{ .Values.config.service.ports.cnosdb }}
           protocol: TCP
         volumeMounts:
-          - name: cnosdbvolume
+          - name: data
             mountPath: /cnosdb
           - name: cnosdb
             mountPath: /etc/config/
       volumes:
-      - name: cnosdbvolume
-        hostPath:
-          path: /opt/data
       - name: cnosdb
         configMap:
           name: cnosdb
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      storageClassName: {{ .Values.config.storageClass }}
+      resources:
+        requests:
+          storage: {{ .Values.config.storageSize }}
