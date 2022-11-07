@@ -13,7 +13,7 @@ resource "aws_key_pair" "generated_key" {
   public_key = tls_private_key.cnosdb.public_key_openssh
 
   provisioner "local-exec" {
-    command = "echo '${tls_private_key.cnosdb.private_key_pem}' > ./cnosdb.pem"
+    command = "echo '${tls_private_key.cnosdb.private_key_pem}' > ${var.key_path}/${var.key_private}"
   }
 }
 
@@ -80,16 +80,19 @@ resource "aws_security_group" "cnosdb_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  ingress {
+    from_port   = 31007
+    to_port     = 31007
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
   egress {
     from_port   = 0
     to_port     = 0
     protocol    = -1
     cidr_blocks = ["0.0.0.0/0"]
   }
-}
-
-data "template_file" "user_data" {
-  template = file("server.yml")
 }
 
 resource "aws_instance" "cnosdb_server" {
@@ -100,7 +103,12 @@ resource "aws_instance" "cnosdb_server" {
   subnet_id                   = aws_subnet.cnosdb_subnet.id
   vpc_security_group_ids      = [aws_security_group.cnosdb_sg.id]
 
-  user_data = data.template_file.user_data.rendered
+  user_data = <<-EOF
+    #!/bin/bash
+    set -ex
+    sudo systemctl start docker
+    sudo docker run -itd  --env cpu=2 --env memory=4 -p 31007:31007 cnosdb/cnosdb
+  EOF
 
   root_block_device {
     delete_on_termination = true
