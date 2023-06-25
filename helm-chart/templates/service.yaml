@@ -1,17 +1,54 @@
+---
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ .Chart.Name }}
+  name: meta
   labels:
-    app: cnosdb
-    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
-    release: "{{ .Release.Name }}"
-    heritage: "{{ .Release.Service }}"
+    app: meta
 spec:
-  type: NodePort
   ports:
-  - port: {{ .Values.config.service.ports.cnosdb }}
-    targetPort: {{ .Values.config.service.ports.cnosdb }}
-    nodePort: {{ .Values.config.service.nodePorts.cnosdb }}
+    - port: {{ .Values.config.meta.port.meta_port }}
+      name: meta
+  clusterIP: None
   selector:
-    app: cnosdb
+    app: meta
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tskvnp
+  labels:
+    app: tskv
+spec:
+  ports:
+    - port: {{ .Values.config.tskv.port.http_listen_port }}
+      name: http
+    - port: {{ .Values.config.tskv.port.grpc_listen_port }}
+      name: grpc
+    - port: {{ .Values.config.tskv.port.tcp_listen_port }}
+      name: tcp
+    - port: {{ .Values.config.tskv.port.flight_rpc_listen_port }}
+      name: flight
+  type: NodePort
+  selector:
+    app: tskv
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tskv
+  labels:
+    app: tskv
+spec:
+  ports:
+    - port: {{ .Values.config.tskv.port.http_listen_port }}
+      name: http
+    - port: {{ .Values.config.tskv.port.grpc_listen_port }}
+      name: grpc
+    - port: {{ .Values.config.tskv.port.tcp_listen_port }}
+      name: tcp
+    - port: {{ .Values.config.tskv.port.flight_rpc_listen_port }}
+      name: flight
+  clusterIP: None
+  selector:
+    app: tskv

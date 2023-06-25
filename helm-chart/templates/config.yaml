@@ -1,24 +1,62 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ .Chart.Name }}
-  labels:
-    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
-    release: "{{ .Release.Name }}"
-    heritage: "{{ .Release.Service }}"
+  name: meta
 data:
-  cnosdb.conf: |-
+  config.toml: |
+    id = nodeid
+    host = "0.0.0.0"
+    port = {{ .Values.config.meta.port.meta_port }}
+    http_addr = "0.0.0.0:{{ .Values.config.meta.port.meta_port }}"
+    snapshot_path = "/data/cnosdb/meta/snapshot"
+    journal_path = "/data/cnosdb/meta/journal"
+    snapshot_per_events = 500
+
+    [node_basic]
+    node_id = nodeid
+    cold_data_server = false
+    store_metrics = true
+
+    [heartbeat]
+    heartbeat_recheck_interval = 300
+    heartbeat_expired_interval = 600
+    [log]
+    logs_level = "info"
+    logs_path = "/tmp/cnosdb/logs"
+
+    [meta_init]
+    cluster_name = "{{ .Values.clusterName }}"
+    admin_user = "root"
+    system_tenant = "cnosdb"
+    default_database = ["public", "usage_schema"]
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tskv
+data:
+  config.toml: |
+    host = 'hostname'
+    [deployment]
+    mode = 'query_tskv'
+    cpu = 4
+    memory = 4
+    [query]
+    max_server_connections = 10240
+    query_sql_limit = 16777216
+    write_sql_limit = 167772160
+    auth_enabled = false
+    [hinted_off]
+    enable = true
+    path = '/tmp/cnosdb/1001/hh'
+
     [storage]
-    # Directory for summary: $path/summary/
-    # Directory for index: $path/index/$database/
-    # Directory for tsm: $path/data/$database/tsm/
-    # Directory for delta: $path/data/$database/delta/
-    path = 'data/db'
-    max_summary_size = {{ .Values.config.tskv.max_summary_size }}
-    max_level = {{ .Values.config.tskv.max_level }}
-    base_file_size = {{ .Values.config.tskv.base_file_size }}
-    compact_trigger = {{ .Values.config.tskv.compact_trigger }}
-    max_compact_size = {{ .Values.config.tskv.max_compact_size }} 
+    path = '/data/cnosdb/db'
+    max_level = 4
+    base_file_size = "16M"
+    compact_trigger = 4
+    max_compact_size = "{{ .Values.config.tskv.max_compact_size }}"
     dio_max_resident = 1024
     dio_max_non_resident = 1024
     dio_page_len_scale = 1
@@ -26,18 +64,35 @@ data:
 
     [wal]
     enabled = true
-    path = 'data/wal'
+    path = '/data/cnosdb/wal'
     sync = false
 
     [cache]
-    max_buffer_size = {{ .Values.config.tskv.cache.max_buffer_size }} 
+    max_buffer_size = "{{ .Values.config.tskv.cache.max_buffer_size }}"
     max_immutable_number = 4
 
     [log]
-    level = 'debug'
-    path = 'data/log'
-
+    level = 'info'
+    path = '/data/cnosdb/log'
     [security]
     # [security.tls_config]
     # certificate = "./config/tls/server.crt"
     # private_key = "./config/tls/server.key"
+    [cluster]
+    name = '{{ .Values.clusterName }}'
+    meta_service_addr = ['meta-0.meta:{{ .Values.config.meta.port.meta_port }}']
+    node_id = nodeid
+    http_listen_port = {{ .Values.config.tskv.port.http_listen_port }}
+    grpc_listen_port = {{ .Values.config.tskv.port.grpc_listen_port }}
+    tcp_listen_port = {{ .Values.config.tskv.port.tcp_listen_port }}
+    flight_rpc_listen_port = {{ .Values.config.tskv.port.flight_rpc_listen_port }}
+    [node_basic]
+    node_id = nodeid
+    cold_data_server = false
+    store_metrics = true
+
+    [heartbeat]
+    report_time_interval_secs = 30
+    [hintedoff]
+    enable = true
+    path = '/data/cnosdb/hh'

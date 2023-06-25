@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: meta
+  labels:
+    app: meta
+spec:
+  serviceName: "meta"
+  selector:
+    matchLabels:
+      app: meta
+  replicas: {{ .Values.config.meta.replicas }}
+  template:
+    metadata:
+      labels:
+        app: meta
+    spec:
+      containers:
+        - name: meta
+          {{- if .Values.config.meta.resources }}
+          resources: {{- toYaml .Values.config.meta.resources | nindent 12 }}
+          {{- end }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          image: {{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}
+          command: ['sh', '-c', 'bash /usr/bin/endpoint.sh']
+          lifecycle:
+            postStart:
+              exec:
+                command: ["/bin/sh", "-c", "curl -v 0.0.0.0:21000/init -d \"{}\""]
+          ports:
+            - containerPort: {{ .Values.config.meta.port.meta_port }}
+              name: meta
+          volumeMounts:
+            - name: meta
+              mountPath: /data/cnosdb
+            - name: config
+              mountPath: /etc/config
+      volumes:
+        - name: config
+          configMap:
+            name: meta
+  volumeClaimTemplates:
+    - metadata:
+        name: meta
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: {{ .Values.config.storageSize }}

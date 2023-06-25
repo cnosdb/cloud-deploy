@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: tskv
+  #namespace: ytest
+  labels:
+    app: tskv
+spec:
+  serviceName: "tskv"
+  selector:
+    matchLabels:
+      app: tskv
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        app: tskv
+    spec:
+      nodeSelector:
+        master: master
+      subdomain: "tskv"
+      hostname: "tskv-$(POD_ORDINAL).tskv"
+      containers:
+        - name: tskv
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          image: {{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}
+          command: ['sh', '-c', 'sleep 15 && bash /usr/bin/endpoint.sh']
+          {{- if .Values.config.tskv.resources }}
+          resources: {{- toYaml .Values.config.tskv.resources | nindent 12 }}
+          {{- end }}
+          ports:
+            - containerPort: {{ .Values.config.tskv.port.http_listen_port }}
+              name: http
+            - containerPort: {{ .Values.config.tskv.port.grpc_listen_port }}
+              name: grpc
+            - containerPort: {{ .Values.config.tskv.port.tcp_listen_port }}
+              name: tcp
+            - containerPort: {{ .Values.config.tskv.port.flight_rpc_listen_port }}
+              name: flight
+          volumeMounts:
+            - name: tskv
+              mountPath: /data/cnosdb
+            - name: config
+              mountPath: /etc/config
+      volumes:
+        - name: config
+          configMap:
+            name: tskv
+  volumeClaimTemplates:
+  - metadata:
+      name: tskv
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      storageClassName: {{ .Values.config.storageClass }}
+      resources:
+        requests:
+          storage: {{ .Values.config.storageSize }}
